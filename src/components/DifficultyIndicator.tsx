@@ -1,8 +1,8 @@
 type DifficultyIndicatorProps = {
-  difficulty: string | null
+  difficulty: string | number | null
 }
 
-function getDifficultyLevel(value: string | null) {
+function getDifficultyLevel(value: string | number | null) {
   const parsedValue = Number(value)
 
   if (Number.isNaN(parsedValue)) {

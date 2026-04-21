@@ -1,27 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { submitWordAnswer } from '../services/reviewService'
-import { fetchWords, fetchWordsByDifficulty } from '../services/wordsService'
+import { fetchWords, fetchWordsByTopic } from '../services/wordsService'
 import type { Word } from '../types/word'
 import DifficultyIndicator from './DifficultyIndicator'
+import { formatTopicsForDisplay, hasTopic, parseTopics } from '../utils/topics'
 
-type QuizDifficulty = '1' | '2' | '3' | '4' | 'random'
-type QuizStage = 'setup' | 'quiz' | 'summary'
+type CategoryStage = 'setup' | 'quiz' | 'summary'
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
 
-type QuizResult = {
+type CategoryResult = {
   isCorrect: boolean
   acceptedTranslations: string
 }
 
-const QUIZ_LENGTH = 10
-
-const difficultyOptions: Array<{ value: QuizDifficulty; label: string }> = [
-  { value: '1', label: '1' },
-  { value: '2', label: '2' },
-  { value: '3', label: '3' },
-  { value: '4', label: '4' },
-  { value: 'random', label: 'Random' },
-]
+const CATEGORY_LENGTH = 5
 
 function shuffleWords(words: Word[]) {
   const shuffledWords = [...words]
@@ -36,35 +28,28 @@ function shuffleWords(words: Word[]) {
   return shuffledWords
 }
 
-function buildQuizWords(words: Word[], difficulty: QuizDifficulty) {
-  const sourceWords = difficulty === 'random' ? words : words
-
-  return shuffleWords(sourceWords).slice(0, QUIZ_LENGTH)
+function buildCategoryWords(words: Word[], category: string) {
+  return shuffleWords(words.filter((word) => hasTopic(word.topic, category))).slice(
+    0,
+    CATEGORY_LENGTH
+  )
 }
 
-function getQuizRequirementCopy(difficulty: QuizDifficulty) {
-  if (difficulty === 'random') {
-    return 'You need at least 10 words in Supabase to start a random quiz.'
-  }
-
-  return `You need at least 10 words with difficulty ${difficulty} to start this quiz.`
-}
-
-function QuizPractice() {
+function CategoryPractice() {
   const [words, setWords] = useState<Word[]>([])
-  const [selectedDifficulty, setSelectedDifficulty] = useState<QuizDifficulty>('random')
-  const [quizWords, setQuizWords] = useState<Word[]>([])
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [categoryWords, setCategoryWords] = useState<Word[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [userAnswer, setUserAnswer] = useState('')
   const [answerStatus, setAnswerStatus] = useState<AnswerStatus>('idle')
-  const [lastResult, setLastResult] = useState<QuizResult | null>(null)
+  const [lastResult, setLastResult] = useState<CategoryResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isPreparingQuiz, setIsPreparingQuiz] = useState(false)
+  const [isPreparingSession, setIsPreparingSession] = useState(false)
   const [isSavingAnswer, setIsSavingAnswer] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
-  const [stage, setStage] = useState<QuizStage>('setup')
+  const [stage, setStage] = useState<CategoryStage>('setup')
   const answerInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -88,7 +73,7 @@ function QuizPractice() {
         }
 
         setErrorMessage(
-          error instanceof Error ? error.message : 'Could not load quiz words.'
+          error instanceof Error ? error.message : 'Could not load category words.'
         )
       } finally {
         if (isMounted) {
@@ -112,7 +97,19 @@ function QuizPractice() {
     answerInputRef.current?.focus()
   }, [stage, currentIndex, answerStatus])
 
-  const currentWord = quizWords[currentIndex] ?? null
+  const availableCategories = useMemo(() => {
+    const uniqueTopics = new Set<string>()
+
+    words.forEach((word) => {
+      parseTopics(word.topic).forEach((topic) => {
+        uniqueTopics.add(topic)
+      })
+    })
+
+    return [...uniqueTopics].sort((left, right) => left.localeCompare(right))
+  }, [words])
+
+  const currentWord = categoryWords[currentIndex] ?? null
 
   const totals = useMemo(
     () => ({
@@ -122,24 +119,27 @@ function QuizPractice() {
     [currentIndex, score]
   )
 
-  const startQuiz = async () => {
-    setIsPreparingQuiz(true)
+  const startCategorySession = async () => {
+    if (!selectedCategory) {
+      setErrorMessage('Choose a category to start this session.')
+      return
+    }
+
+    setIsPreparingSession(true)
     setErrorMessage('')
 
     try {
-      const sourceWords =
-        selectedDifficulty === 'random'
-          ? words
-          : await fetchWordsByDifficulty(selectedDifficulty)
+      const fetchedWords = await fetchWordsByTopic(selectedCategory)
+      const nextCategoryWords = buildCategoryWords(fetchedWords, selectedCategory)
 
-      const nextQuizWords = buildQuizWords(sourceWords, selectedDifficulty)
-
-      if (nextQuizWords.length < QUIZ_LENGTH) {
-        setErrorMessage(getQuizRequirementCopy(selectedDifficulty))
+      if (nextCategoryWords.length < CATEGORY_LENGTH) {
+        setErrorMessage(
+          `You need at least 5 words in the "${selectedCategory}" category to start this mode.`
+        )
         return
       }
 
-      setQuizWords(nextQuizWords)
+      setCategoryWords(nextCategoryWords)
       setCurrentIndex(0)
       setScore(0)
       setUserAnswer('')
@@ -149,10 +149,10 @@ function QuizPractice() {
       setStage('quiz')
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Could not prepare this quiz.'
+        error instanceof Error ? error.message : 'Could not prepare this category session.'
       )
     } finally {
-      setIsPreparingQuiz(false)
+      setIsPreparingSession(false)
     }
   }
 
@@ -182,7 +182,7 @@ function QuizPractice() {
       }
     } catch (error) {
       setSaveErrorMessage(
-        error instanceof Error ? error.message : 'Could not save your quiz answer.'
+        error instanceof Error ? error.message : 'Could not save your category answer.'
       )
     } finally {
       setIsSavingAnswer(false)
@@ -192,7 +192,7 @@ function QuizPractice() {
   const handleNextQuestion = () => {
     const nextIndex = currentIndex + 1
 
-    if (nextIndex >= quizWords.length) {
+    if (nextIndex >= categoryWords.length) {
       setStage('summary')
       return
     }
@@ -204,9 +204,9 @@ function QuizPractice() {
     setSaveErrorMessage('')
   }
 
-  const handleRestartQuiz = () => {
+  const handleRestart = () => {
     setStage('setup')
-    setQuizWords([])
+    setCategoryWords([])
     setCurrentIndex(0)
     setScore(0)
     setUserAnswer('')
@@ -219,50 +219,9 @@ function QuizPractice() {
   if (isLoading) {
     return (
       <section className="page-section">
-        <span className="page-section__tag">Quiz</span>
-        <h2>Loading quiz words...</h2>
-        <p>Preparing a 10-question session from your vocabulary.</p>
-      </section>
-    )
-  }
-
-  if (errorMessage && stage === 'setup') {
-    return (
-      <section className="page-section">
-        <span className="page-section__tag">Quiz</span>
-        <h2>Quiz setup</h2>
-        <p>Pick a difficulty and start a focused 10-question round.</p>
-
-        <div className="quiz-difficulty-selector">
-          {difficultyOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={
-                option.value === selectedDifficulty
-                  ? 'quiz-difficulty-option is-active'
-                  : 'quiz-difficulty-option'
-              }
-              onClick={() => {
-                setSelectedDifficulty(option.value)
-                setErrorMessage('')
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => void startQuiz()}
-          disabled={isPreparingQuiz}
-        >
-          {isPreparingQuiz ? 'Preparing quiz...' : 'Start quiz'}
-        </button>
-
-        <p className="auth-message auth-message--error">{errorMessage}</p>
+        <span className="page-section__tag">Category</span>
+        <h2>Loading categories...</h2>
+        <p>Preparing a focused 5-question session from your vocabulary.</p>
       </section>
     )
   }
@@ -270,35 +229,48 @@ function QuizPractice() {
   if (stage === 'setup') {
     return (
       <section className="page-section">
-        <span className="page-section__tag">Quiz</span>
-        <h2>Pick your difficulty</h2>
-        <p>Choose the level for this 10-question quiz, or go random for a mixed round.</p>
+        <span className="page-section__tag">Category</span>
+        <h2>Choose a category</h2>
+        <p>Pick one category and practise 5 words from that topic.</p>
 
-        <div className="quiz-difficulty-selector">
-          {difficultyOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={
-                option.value === selectedDifficulty
-                  ? 'quiz-difficulty-option is-active'
-                  : 'quiz-difficulty-option'
-              }
-              onClick={() => setSelectedDifficulty(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        {availableCategories.length > 0 ? (
+          <div className="quiz-difficulty-selector">
+            {availableCategories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={
+                  category === selectedCategory
+                    ? 'quiz-difficulty-option is-active'
+                    : 'quiz-difficulty-option'
+                }
+                onClick={() => {
+                  setSelectedCategory(category)
+                  setErrorMessage('')
+                }}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="auth-message auth-message--error">
+            No categories were found in the `topic` field yet.
+          </p>
+        )}
 
         <button
           type="button"
           className="primary-button"
-          onClick={() => void startQuiz()}
-          disabled={isPreparingQuiz}
+          onClick={() => void startCategorySession()}
+          disabled={availableCategories.length === 0 || isPreparingSession}
         >
-          {isPreparingQuiz ? 'Preparing quiz...' : 'Start quiz'}
+          {isPreparingSession ? 'Preparing session...' : 'Start category mode'}
         </button>
+
+        {errorMessage ? (
+          <p className="auth-message auth-message--error">{errorMessage}</p>
+        ) : null}
       </section>
     )
   }
@@ -306,10 +278,10 @@ function QuizPractice() {
   if (stage === 'summary') {
     return (
       <section className="page-section">
-        <span className="page-section__tag">Quiz</span>
-        <h2>Quiz complete</h2>
+        <span className="page-section__tag">Category</span>
+        <h2>{selectedCategory}</h2>
         <p className="quiz-summary-score">
-          Score: {score} / {QUIZ_LENGTH}
+          Score: {score} / {CATEGORY_LENGTH}
         </p>
 
         <div className="quiz-summary-grid">
@@ -320,13 +292,13 @@ function QuizPractice() {
 
           <article className="quiz-summary-card">
             <span>Wrong answers</span>
-            <strong>{QUIZ_LENGTH - score}</strong>
+            <strong>{CATEGORY_LENGTH - score}</strong>
           </article>
         </div>
 
         <div className="practice-actions">
-          <button type="button" className="primary-button" onClick={handleRestartQuiz}>
-            New quiz
+          <button type="button" className="primary-button" onClick={handleRestart}>
+            New category session
           </button>
         </div>
       </section>
@@ -336,21 +308,21 @@ function QuizPractice() {
   if (!currentWord) {
     return (
       <section className="page-section">
-        <span className="page-section__tag">Quiz</span>
-        <h2>Could not start this quiz.</h2>
-        <p>Try again and we will build a fresh 10-question session.</p>
+        <span className="page-section__tag">Category</span>
+        <h2>Could not start this session.</h2>
+        <p>Try again and we will prepare a fresh 5-question category round.</p>
       </section>
     )
   }
 
   return (
     <section className="page-section">
-      <span className="page-section__tag">Quiz</span>
+      <span className="page-section__tag">Category</span>
       <div className="quiz-progress-row">
         <div>
-          <h2>Question {currentIndex + 1} of {QUIZ_LENGTH}</h2>
+          <h2>Question {currentIndex + 1} of {CATEGORY_LENGTH}</h2>
           <p className="quiz-progress-copy">
-            Score: {score} correct, {totals.wrongAnswers} wrong.
+            {selectedCategory} - {score} correct, {totals.wrongAnswers} wrong.
           </p>
         </div>
         <DifficultyIndicator difficulty={currentWord.difficulty} />
@@ -358,7 +330,9 @@ function QuizPractice() {
 
       <div className="practice-word-block practice-word-block--enter">
         <p className="practice-word">{currentWord.english_word}</p>
-        {currentWord.topic ? <p className="practice-topic">{currentWord.topic}</p> : null}
+        {currentWord.topic ? (
+          <p className="practice-topic">{formatTopicsForDisplay(currentWord.topic)}</p>
+        ) : null}
       </div>
 
       <form
@@ -405,7 +379,7 @@ function QuizPractice() {
               className="primary-button"
               onClick={handleNextQuestion}
             >
-              {currentIndex + 1 === QUIZ_LENGTH ? 'View results' : 'Next question'}
+              {currentIndex + 1 === CATEGORY_LENGTH ? 'View results' : 'Next question'}
             </button>
           )}
         </div>
@@ -430,4 +404,5 @@ function QuizPractice() {
   )
 }
 
-export default QuizPractice
+export default CategoryPractice
+

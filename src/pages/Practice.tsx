@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import CategoryPractice from '../components/CategoryPractice'
 import FreePractice from '../components/FreePractice'
 import QuizPractice from '../components/QuizPractice'
+import SprintPractice from '../components/SprintPractice'
 import type { PracticeMode } from '../types/practice'
 
 type PracticeModeCard = {
@@ -27,13 +29,13 @@ const practiceModes: PracticeModeCard[] = [
     id: 'category',
     title: 'Category',
     description: '5 questions from one selected category.',
-    isAvailable: false,
+    isAvailable: true,
   },
   {
     id: 'sprint',
     title: 'Sprint',
     description: 'Answer as many as you can in 35 seconds.',
-    isAvailable: false,
+    isAvailable: true,
   },
 ]
 
@@ -72,6 +74,42 @@ function Practice() {
         </div>
 
         <QuizPractice />
+      </div>
+    )
+  }
+
+  if (currentMode === 'category') {
+    return (
+      <div className="practice-shell">
+        <div className="practice-subnav">
+          <button
+            type="button"
+            className="practice-subnav__back"
+            onClick={() => setCurrentMode('menu')}
+          >
+            Back to modes
+          </button>
+        </div>
+
+        <CategoryPractice />
+      </div>
+    )
+  }
+
+  if (currentMode === 'sprint') {
+    return (
+      <div className="practice-shell">
+        <div className="practice-subnav">
+          <button
+            type="button"
+            className="practice-subnav__back"
+            onClick={() => setCurrentMode('menu')}
+          >
+            Back to modes
+          </button>
+        </div>
+
+        <SprintPractice />
       </div>
     )
   }

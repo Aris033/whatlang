@@ -668,6 +668,51 @@
   font-size: 1.6rem;
 }
 
+.sprint-setup-card {
+  display: grid;
+  gap: 18px;
+  margin: 22px 0 18px;
+}
+
+.sprint-summary-header {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.sprint-timer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 96px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #123458 0%, #1f6aa5 100%);
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 14px 28px rgba(18, 52, 88, 0.16);
+}
+
+.sprint-timer--large {
+  min-width: 118px;
+  padding: 18px 22px;
+  font-size: 2rem;
+}
+
+.sprint-stats-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.sprint-inline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .practice-actions {
   display: flex;
   flex-direction: column;
@@ -1007,6 +1052,15 @@
 
   .quiz-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sprint-summary-header {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .sprint-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .mistake-card {

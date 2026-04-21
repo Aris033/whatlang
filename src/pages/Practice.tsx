@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { saveAnswer } from '../services/answersService'
-import { updateUserWordProgress } from '../services/progressService'
+import { submitWordAnswer } from '../services/reviewService'
 import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
-
-function normalizeValue(value: string) {
-  return value.trim().toLowerCase()
-}
 
 function getRandomWord(words: Word[], currentWordId?: number) {
   if (words.length === 0) {
@@ -79,40 +73,17 @@ function Practice() {
       return
     }
 
-    const normalizedUserAnswer = normalizeValue(userAnswer)
-    const normalizedCorrectAnswer = normalizeValue(currentWord.spanish_translation)
-    const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer
-
-    setAnswerStatus(isCorrect ? 'correct' : 'incorrect')
     setSaveErrorMessage('')
     setIsSavingAnswer(true)
 
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
-
-      if (userError) {
-        throw new Error(userError.message)
-      }
-
-      if (!user) {
-        throw new Error('You must be signed in to save your answer.')
-      }
-
-      await saveAnswer({
-        userId: user.id,
+      const result = await submitWordAnswer({
         wordId: currentWord.id,
-        userAnswer: userAnswer.trim(),
-        isCorrect,
+        userAnswer,
+        correctTranslation: currentWord.spanish_translation,
       })
 
-      await updateUserWordProgress({
-        userId: user.id,
-        wordId: currentWord.id,
-        isCorrect,
-      })
+      setAnswerStatus(result.isCorrect ? 'correct' : 'incorrect')
     } catch (error) {
       setSaveErrorMessage(
         error instanceof Error ? error.message : 'Could not save your answer.'

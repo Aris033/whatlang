@@ -183,10 +183,11 @@
 }
 
 .mistake-card__header {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.mistake-card__title-group {
+  display: grid;
 }
 
 .mistake-card__header h3 {
@@ -195,9 +196,95 @@
   font-size: 1.25rem;
 }
 
-.mistake-card__header span {
-  color: #6a7f95;
-  font-size: 0.92rem;
+.mistake-card__body {
+  display: grid;
+  gap: 12px;
+}
+
+.mistake-card__chips {
+  margin-bottom: 0;
+}
+
+.mistake-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #eef4fb;
+  color: #35506e;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.mistake-chip--interactive {
+  background-color: #f5f7fb;
+  color: #4e647d;
+  border-color: #d7e1ed;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mistake-chip--interactive:hover {
+  background-color: #eaf1f9;
+  border-color: #b9cbe0;
+  transform: translateY(-1px);
+}
+
+.mistake-card__review {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mistake-card__input {
+  width: 100%;
+  border: 1px solid #c8d5e5;
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: #123458;
+  background-color: #ffffff;
+}
+
+.mistake-card__input::placeholder {
+  color: #7c90a6;
+}
+
+.mistake-card__input:focus {
+  outline: 2px solid rgba(31, 106, 165, 0.2);
+  border-color: #1f6aa5;
+}
+
+.mistake-card__check {
+  align-self: flex-start;
+  border: 1px solid #c8d5e5;
+  background-color: #ffffff;
+  color: #123458;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.mistake-card__check:hover {
+  background-color: #eef4fb;
+  border-color: #1f6aa5;
+  transform: translateY(-1px);
+}
+
+.mistake-card__check:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
 }
 
 .auth-card {
@@ -405,10 +492,9 @@
     padding: 22px;
   }
 
-  .mistake-card__header {
-    flex-direction: row;
+  .mistake-card__review {
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
   }
 }
 

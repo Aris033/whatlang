@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import type { ReactNode } from 'react'
 import NavBar from './components/NavBar'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -15,12 +14,6 @@ const navigationItems: NavigationItem[] = [
   { id: 'practice', label: 'Practice' },
   { id: 'mistakes', label: 'Mistakes' },
 ]
-
-const pageComponents: Record<AppPage, ReactNode> = {
-  home: <Home />,
-  practice: <Practice />,
-  mistakes: <Mistakes />,
-}
 
 function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -135,7 +128,9 @@ function App() {
           onNavigate={setCurrentPage}
         />
 
-        {pageComponents[currentPage]}
+        {currentPage === 'home' ? <Home /> : null}
+        {currentPage === 'practice' ? <Practice /> : null}
+        {currentPage === 'mistakes' ? <Mistakes /> : null}
       </main>
     </div>
   )

@@ -1,59 +1,135 @@
 import { useEffect, useState } from 'react'
 import { fetchMistakes } from '../services/mistakesService'
+import { submitWordAnswer } from '../services/reviewService'
 import type { Mistake } from '../types/mistake'
 
-function formatAnsweredAt(value: string) {
-  return new Date(value).toLocaleString()
+type AnswerStatus = 'idle' | 'correct' | 'incorrect'
+
+type MistakeReviewState = {
+  answer: string
+  feedbackStatus: AnswerStatus
+  feedbackMessage: string
+  saveErrorMessage: string
+  isSaving: boolean
+  isTranslationVisible: boolean
+}
+
+function createInitialReviewState(): MistakeReviewState {
+  return {
+    answer: '',
+    feedbackStatus: 'idle',
+    feedbackMessage: '',
+    saveErrorMessage: '',
+    isSaving: false,
+    isTranslationVisible: false,
+  }
 }
 
 function Mistakes() {
   const [mistakes, setMistakes] = useState<Mistake[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [reviewStateByWordId, setReviewStateByWordId] = useState<
+    Record<number, MistakeReviewState>
+  >({})
 
   useEffect(() => {
-    let isMounted = true
-
-    const loadMistakes = async () => {
-      setIsLoading(true)
-      setErrorMessage('')
-
-      try {
-        const fetchedMistakes = await fetchMistakes()
-
-        if (!isMounted) {
-          return
-        }
-
-        setMistakes(fetchedMistakes)
-      } catch (error) {
-        if (!isMounted) {
-          return
-        }
-
-        setErrorMessage(
-          error instanceof Error ? error.message : 'Could not load mistakes.'
-        )
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
     void loadMistakes()
-
-    return () => {
-      isMounted = false
-    }
   }, [])
+
+  const loadMistakes = async () => {
+    setIsLoading(true)
+    setErrorMessage('')
+
+    try {
+      const fetchedMistakes = await fetchMistakes()
+
+      setMistakes(fetchedMistakes)
+      setReviewStateByWordId((current) => {
+        const nextState: Record<number, MistakeReviewState> = {}
+
+        for (const mistake of fetchedMistakes) {
+          nextState[mistake.word_id] =
+            current[mistake.word_id] ?? createInitialReviewState()
+        }
+
+        return nextState
+      })
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Could not load mistakes.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateReviewState = (
+    wordId: number,
+    updater: (state: MistakeReviewState) => MistakeReviewState
+  ) => {
+    setReviewStateByWordId((current) => ({
+      ...current,
+      [wordId]: updater(current[wordId] ?? createInitialReviewState()),
+    }))
+  }
+
+  const handleCheckAnswer = async (mistake: Mistake) => {
+    const state = reviewStateByWordId[mistake.word_id] ?? createInitialReviewState()
+
+    if (!state.answer.trim()) {
+      return
+    }
+
+    updateReviewState(mistake.word_id, (current) => ({
+      ...current,
+      saveErrorMessage: '',
+      feedbackStatus: 'idle',
+      feedbackMessage: '',
+      isSaving: true,
+    }))
+
+    try {
+      const result = await submitWordAnswer({
+        wordId: mistake.word_id,
+        userAnswer: state.answer,
+        correctTranslation: mistake.word.spanish_translation,
+      })
+
+      updateReviewState(mistake.word_id, (current) => ({
+        ...current,
+        answer: '',
+        isSaving: false,
+        feedbackStatus: result.isCorrect ? 'correct' : 'incorrect',
+        feedbackMessage: result.isCorrect
+          ? 'Correct!'
+          : `Incorrect. Correct answer: ${mistake.word.spanish_translation}`,
+      }))
+
+      await loadMistakes()
+    } catch (error) {
+      updateReviewState(mistake.word_id, (current) => ({
+        ...current,
+        isSaving: false,
+        saveErrorMessage:
+          error instanceof Error ? error.message : 'Could not save your answer.',
+      }))
+    }
+  }
+
+  const toggleTranslation = (wordId: number) => {
+    updateReviewState(wordId, (current) => ({
+      ...current,
+      isTranslationVisible: !current.isTranslationVisible,
+    }))
+  }
 
   if (isLoading) {
     return (
       <section className="page-section">
         <span className="page-section__tag">Review</span>
         <h2>Loading your mistakes...</h2>
-        <p>Fetching your latest incorrect answers from Supabase.</p>
+        <p>Fetching your current review words from Supabase.</p>
       </section>
     )
   }
@@ -91,25 +167,81 @@ function Mistakes() {
       </p>
 
       <div className="mistakes-list">
-        {mistakes.map((mistake) => (
-          <article key={mistake.word_id} className="mistake-card">
-            <div className="mistake-card__header">
-              <h3>{mistake.word.english_word}</h3>
-              <span>{formatAnsweredAt(mistake.last_answered_at)}</span>
-            </div>
+        {mistakes.map((mistake) => {
+          const state =
+            reviewStateByWordId[mistake.word_id] ?? createInitialReviewState()
 
-            <div className="practice-meta">
-              <span>Translation: {mistake.word.spanish_translation}</span>
-              <span>Wrong: {mistake.wrong_count}</span>
-              <span>Correct: {mistake.correct_count}</span>
-              <span>Total attempts: {mistake.total_attempts}</span>
-              {mistake.word.topic ? <span>Topic: {mistake.word.topic}</span> : null}
-              {mistake.word.difficulty ? (
-                <span>Difficulty: {mistake.word.difficulty}</span>
-              ) : null}
-            </div>
-          </article>
-        ))}
+          return (
+            <article key={mistake.word_id} className="mistake-card">
+              <div className="mistake-card__header">
+                <div className="mistake-card__title-group">
+                  <h3>{mistake.word.english_word}</h3>
+                </div>
+              </div>
+
+              <div className="mistake-card__body">
+                <div className="practice-meta mistake-card__chips">
+                  <span>Wrong: {mistake.pending_wrong_count}</span>
+                  {mistake.word.topic ? <span>Topic: {mistake.word.topic}</span> : null}
+                  <button
+                    type="button"
+                    className="mistake-chip mistake-chip--interactive"
+                    onClick={() => toggleTranslation(mistake.word_id)}
+                  >
+                    {state.isTranslationVisible
+                      ? `Translation: ${mistake.word.spanish_translation}`
+                      : 'View translation'}
+                  </button>
+                </div>
+
+                <div className="mistake-card__review">
+                  <input
+                    type="text"
+                    value={state.answer}
+                    onChange={(event) =>
+                      updateReviewState(mistake.word_id, (current) => ({
+                        ...current,
+                        answer: event.target.value,
+                        feedbackStatus: 'idle',
+                        feedbackMessage: '',
+                        saveErrorMessage: '',
+                      }))
+                    }
+                    className="mistake-card__input"
+                    placeholder="Type the Spanish translation"
+                  />
+
+                  <button
+                    type="button"
+                    className="mistake-card__check"
+                    onClick={() => void handleCheckAnswer(mistake)}
+                    disabled={!state.answer.trim() || state.isSaving}
+                  >
+                    {state.isSaving ? 'Checking...' : 'Check'}
+                  </button>
+                </div>
+
+                {state.saveErrorMessage ? (
+                  <p className="auth-message auth-message--error">
+                    {state.saveErrorMessage}
+                  </p>
+                ) : null}
+
+                {state.feedbackStatus === 'correct' ? (
+                  <p className="auth-message auth-message--success">
+                    {state.feedbackMessage}
+                  </p>
+                ) : null}
+
+                {state.feedbackStatus === 'incorrect' ? (
+                  <p className="auth-message auth-message--error">
+                    {state.feedbackMessage}
+                  </p>
+                ) : null}
+              </div>
+            </article>
+          )
+        })}
       </div>
     </section>
   )

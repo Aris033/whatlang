@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { submitWordAnswer } from '../services/reviewService'
 import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
+import { formatTranslationsForDisplay } from '../utils/translations'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
 const AUTO_ADVANCE_DELAY_MS = 900
@@ -244,13 +245,13 @@ function Practice() {
 
       {answerStatus === 'correct' ? (
         <p className="auth-message auth-message--success">
-          Correct! The translation is {currentWord.spanish_translation}.
+          Correct! Accepted answers: {formatTranslationsForDisplay(currentWord.spanish_translation)}.
         </p>
       ) : null}
 
       {answerStatus === 'incorrect' ? (
         <p className="auth-message auth-message--error">
-          Incorrect. The correct translation is {currentWord.spanish_translation}.
+          Incorrect. Correct answers: {formatTranslationsForDisplay(currentWord.spanish_translation)}.
         </p>
       ) : null}
     </section>

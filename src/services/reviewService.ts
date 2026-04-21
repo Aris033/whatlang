@@ -1,6 +1,10 @@
 import { supabase } from '../lib/supabase'
 import { saveAnswer } from './answersService'
 import { updateUserWordProgress } from './progressService'
+import {
+  formatTranslationsForDisplay,
+  isCorrectTranslation,
+} from '../utils/translations'
 
 type SubmitWordAnswerInput = {
   wordId: number
@@ -11,10 +15,7 @@ type SubmitWordAnswerInput = {
 type SubmitWordAnswerResult = {
   isCorrect: boolean
   normalizedUserAnswer: string
-}
-
-function normalizeValue(value: string) {
-  return value.trim().toLowerCase()
+  formattedAcceptedTranslations: string
 }
 
 export async function submitWordAnswer({
@@ -22,9 +23,10 @@ export async function submitWordAnswer({
   userAnswer,
   correctTranslation,
 }: SubmitWordAnswerInput): Promise<SubmitWordAnswerResult> {
-  const normalizedUserAnswer = normalizeValue(userAnswer)
-  const normalizedCorrectAnswer = normalizeValue(correctTranslation)
-  const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer
+  const {
+    normalizedUserAnswer,
+    isCorrect,
+  } = isCorrectTranslation(userAnswer, correctTranslation)
 
   const {
     data: { user },
@@ -55,5 +57,6 @@ export async function submitWordAnswer({
   return {
     isCorrect,
     normalizedUserAnswer,
+    formattedAcceptedTranslations: formatTranslationsForDisplay(correctTranslation),
   }
 }

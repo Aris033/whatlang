@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchMistakes } from '../services/mistakesService'
 import { submitWordAnswer } from '../services/reviewService'
 import type { Mistake } from '../types/mistake'
+import { formatTranslationsForDisplay } from '../utils/translations'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
 
@@ -103,7 +104,7 @@ function Mistakes() {
         feedbackStatus: result.isCorrect ? 'correct' : 'incorrect',
         feedbackMessage: result.isCorrect
           ? 'Correct!'
-          : `Incorrect. Correct answer: ${mistake.word.spanish_translation}`,
+          : `Incorrect. Correct answers: ${result.formattedAcceptedTranslations}`,
       }))
 
       await loadMistakes()
@@ -189,7 +190,7 @@ function Mistakes() {
                     onClick={() => toggleTranslation(mistake.word_id)}
                   >
                     {state.isTranslationVisible
-                      ? `Translation: ${mistake.word.spanish_translation}`
+                      ? `Translation: ${formatTranslationsForDisplay(mistake.word.spanish_translation)}`
                       : 'View translation'}
                   </button>
                 </div>

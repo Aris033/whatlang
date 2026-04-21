@@ -20,9 +20,11 @@ function App() {
   const [isLoadingSession, setIsLoadingSession] = useState(true)
   const [signOutError, setSignOutError] = useState('')
   const [currentPage, setCurrentPage] = useState<AppPage>('home')
+  const [showWelcomeToast, setShowWelcomeToast] = useState(false)
 
   useEffect(() => {
     let isMounted = true
+    let toastTimeoutId: number | undefined
 
     const loadSession = async () => {
       const { data, error } = await supabase.auth.getSession()
@@ -44,15 +46,34 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
       setSignOutError('')
       setCurrentPage('home')
       setIsLoadingSession(false)
+
+      if (event === 'SIGNED_IN') {
+        setShowWelcomeToast(true)
+
+        if (toastTimeoutId) {
+          window.clearTimeout(toastTimeoutId)
+        }
+
+        toastTimeoutId = window.setTimeout(() => {
+          setShowWelcomeToast(false)
+        }, 1300)
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setShowWelcomeToast(false)
+      }
     })
 
     return () => {
       isMounted = false
+      if (toastTimeoutId) {
+        window.clearTimeout(toastTimeoutId)
+      }
       subscription.unsubscribe()
     }
   }, [])
@@ -85,50 +106,50 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="hero-banner">
-        <p className="hero-banner__eyebrow">WhatLang</p>
-        <div className="hero-banner__content">
+      {showWelcomeToast ? (
+        <div className="app-toast" role="status" aria-live="polite">
+          <strong>Welcome back</strong>
+          <span>You&apos;re signed in and ready to practise.</span>
+        </div>
+      ) : null}
+
+      <header className="app-header">
+        <div className="app-header__brand">
+          <span className="app-header__logo" aria-hidden="true">
+            WL
+          </span>
           <div>
-            <h1>You are signed in.</h1>
-            <p className="hero-banner__description">
-              Your authentication is connected and the app is ready for the
-              next step.
-            </p>
+            <p className="app-header__name">WhatLang</p>
+            <p className="app-header__tagline">English practice with a lighter rhythm</p>
           </div>
-          <div className="hero-banner__card">
-            <span className="hero-banner__badge">Authenticated</span>
-            <p>
-              Signed in as <strong>{session.user.email ?? 'unknown email'}</strong>
-            </p>
+        </div>
+
+        <div className="app-header__nav-area">
+          <NavBar
+            currentPage={currentPage}
+            items={navigationItems}
+            onNavigate={setCurrentPage}
+          />
+
+          <div className="user-menu">
+            <span className="user-menu__email">{session.user.email ?? 'unknown email'}</span>
+            <button
+              type="button"
+              className="user-menu__signout"
+              onClick={handleSignOut}
+            >
+              Sign out
+            </button>
           </div>
         </div>
       </header>
 
       <main className="page-content">
-        <section className="auth-summary">
-          <div>
-            <span className="auth-card__tag">Session</span>
-            <p className="auth-summary__email">
-              Signed in as <strong>{session.user.email ?? 'unknown email'}</strong>
-            </p>
-          </div>
-
-          <button type="button" className="secondary-button" onClick={handleSignOut}>
-            Sign out
-          </button>
-        </section>
-
         {signOutError ? (
           <p className="auth-message auth-message--error">{signOutError}</p>
         ) : null}
 
-        <NavBar
-          currentPage={currentPage}
-          items={navigationItems}
-          onNavigate={setCurrentPage}
-        />
-
-        {currentPage === 'home' ? <Home /> : null}
+        {currentPage === 'home' ? <Home onNavigate={setCurrentPage} /> : null}
         {currentPage === 'practice' ? <Practice /> : null}
         {currentPage === 'mistakes' ? <Mistakes /> : null}
       </main>

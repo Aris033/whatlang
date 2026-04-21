@@ -4,6 +4,44 @@ import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
+const AUTO_ADVANCE_DELAY_MS = 900
+
+function getDifficultyLevel(value: string | null) {
+  const parsedValue = Number(value)
+
+  if (Number.isNaN(parsedValue)) {
+    return null
+  }
+
+  return Math.min(4, Math.max(1, parsedValue))
+}
+
+function DifficultyIndicator({ difficulty }: { difficulty: string | null }) {
+  const level = getDifficultyLevel(difficulty)
+
+  if (!level) {
+    return null
+  }
+
+  return (
+    <div
+      className={`difficulty-indicator difficulty-indicator--level-${level}`}
+      aria-label={`Difficulty level ${level} out of 4`}
+      title={`Difficulty ${level}/4`}
+    >
+      {[1, 2, 3, 4].map((item) => (
+        <span
+          key={item}
+          className={
+            item <= level
+              ? 'difficulty-indicator__bar is-filled'
+              : 'difficulty-indicator__bar'
+          }
+        />
+      ))}
+    </div>
+  )
+}
 
 function getRandomWord(words: Word[], currentWordId?: number) {
   if (words.length === 0) {
@@ -67,6 +105,20 @@ function Practice() {
       isMounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (answerStatus !== 'correct') {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      handleNextWord()
+    }, AUTO_ADVANCE_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [answerStatus, words, currentWord])
 
   const handleCheckAnswer = async () => {
     if (!currentWord) {
@@ -135,14 +187,15 @@ function Practice() {
   return (
     <section className="page-section">
       <span className="page-section__tag">Practice</span>
-      <h2>Translate this word into Spanish.</h2>
-      <p className="practice-word">{currentWord.english_word}</p>
+      <h2>Translate</h2>
 
-      <div className="practice-meta">
-        {currentWord.topic ? <span>Topic: {currentWord.topic}</span> : null}
-        {currentWord.difficulty ? (
-          <span>Difficulty: {currentWord.difficulty}</span>
-        ) : null}
+      <div className="practice-word-block">
+        <div className="practice-word-row">
+          <p className="practice-word">{currentWord.english_word}</p>
+          <DifficultyIndicator difficulty={currentWord.difficulty} />
+        </div>
+
+        {currentWord.topic ? <p className="practice-topic">{currentWord.topic}</p> : null}
       </div>
 
       <div className="practice-form">
@@ -178,7 +231,7 @@ function Practice() {
             type="button"
             className="secondary-button"
             onClick={handleNextWord}
-            disabled={isSavingAnswer}
+            disabled={isSavingAnswer || answerStatus === 'correct'}
           >
             Next word
           </button>

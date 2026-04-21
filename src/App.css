@@ -134,11 +134,74 @@
 }
 
 .practice-word {
-  margin: 18px 0;
+  margin: 0;
   font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 800;
   line-height: 1.05;
   color: #123458;
+}
+
+.practice-word-block {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+
+.practice-word-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.practice-topic {
+  font-style: italic;
+  color: #6c7f95;
+}
+
+.difficulty-indicator {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.difficulty-indicator__bar {
+  width: 8px;
+  border-radius: 999px;
+  background-color: #d8e2ee;
+}
+
+.difficulty-indicator__bar:nth-child(1) {
+  height: 12px;
+}
+
+.difficulty-indicator__bar:nth-child(2) {
+  height: 16px;
+}
+
+.difficulty-indicator__bar:nth-child(3) {
+  height: 20px;
+}
+
+.difficulty-indicator__bar:nth-child(4) {
+  height: 24px;
+}
+
+.difficulty-indicator--level-1 .difficulty-indicator__bar.is-filled {
+  background-color: #2ca66f;
+}
+
+.difficulty-indicator--level-2 .difficulty-indicator__bar.is-filled {
+  background-color: #d6a322;
+}
+
+.difficulty-indicator--level-3 .difficulty-indicator__bar.is-filled {
+  background-color: #dc7a2f;
+}
+
+.difficulty-indicator--level-4 .difficulty-indicator__bar.is-filled {
+  background-color: #d34e4e;
 }
 
 .practice-meta {
@@ -495,6 +558,10 @@
   .mistake-card__review {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .practice-word-row {
+    justify-content: flex-start;
   }
 }
 

@@ -133,6 +133,42 @@
   color: #51657d;
 }
 
+.practice-word {
+  margin: 18px 0;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: #123458;
+}
+
+.practice-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.practice-meta span {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #eef4fb;
+  color: #35506e;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.practice-form {
+  display: grid;
+  gap: 16px;
+}
+
+.practice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .auth-card {
   background-color: #ffffff;
   border: 1px solid #dfe6ef;
@@ -328,6 +364,10 @@
     flex-direction: row;
     align-items: center;
     padding: 24px 28px;
+  }
+
+  .practice-actions {
+    flex-direction: row;
   }
 }
 

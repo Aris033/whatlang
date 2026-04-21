@@ -169,6 +169,37 @@
   gap: 12px;
 }
 
+.mistakes-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.mistake-card {
+  border: 1px solid #dfe6ef;
+  border-radius: 20px;
+  padding: 18px;
+  background-color: #fdfefe;
+}
+
+.mistake-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.mistake-card__header h3 {
+  margin: 0;
+  color: #123458;
+  font-size: 1.25rem;
+}
+
+.mistake-card__header span {
+  color: #6a7f95;
+  font-size: 0.92rem;
+}
+
 .auth-card {
   background-color: #ffffff;
   border: 1px solid #dfe6ef;
@@ -368,6 +399,16 @@
 
   .practice-actions {
     flex-direction: row;
+  }
+
+  .mistake-card {
+    padding: 22px;
+  }
+
+  .mistake-card__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }
 

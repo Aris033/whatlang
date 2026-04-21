@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { saveAnswer } from '../services/answersService'
 import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
 
@@ -30,6 +31,8 @@ function Practice() {
   const [answerStatus, setAnswerStatus] = useState<AnswerStatus>('idle')
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [saveErrorMessage, setSaveErrorMessage] = useState('')
+  const [isSavingAnswer, setIsSavingAnswer] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -69,17 +72,32 @@ function Practice() {
     }
   }, [])
 
-  const handleCheckAnswer = () => {
+  const handleCheckAnswer = async () => {
     if (!currentWord) {
       return
     }
 
     const normalizedUserAnswer = normalizeValue(userAnswer)
     const normalizedCorrectAnswer = normalizeValue(currentWord.spanish_translation)
+    const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer
 
-    setAnswerStatus(
-      normalizedUserAnswer === normalizedCorrectAnswer ? 'correct' : 'incorrect'
-    )
+    setAnswerStatus(isCorrect ? 'correct' : 'incorrect')
+    setSaveErrorMessage('')
+    setIsSavingAnswer(true)
+
+    try {
+      await saveAnswer({
+        wordId: currentWord.id,
+        userAnswer: userAnswer.trim(),
+        isCorrect,
+      })
+    } catch (error) {
+      setSaveErrorMessage(
+        error instanceof Error ? error.message : 'Could not save your answer.'
+      )
+    } finally {
+      setIsSavingAnswer(false)
+    }
   }
 
   const handleNextWord = () => {
@@ -88,6 +106,7 @@ function Practice() {
     setCurrentWord(nextWord)
     setUserAnswer('')
     setAnswerStatus('idle')
+    setSaveErrorMessage('')
   }
 
   if (isLoading) {
@@ -144,6 +163,9 @@ function Practice() {
               if (answerStatus !== 'idle') {
                 setAnswerStatus('idle')
               }
+              if (saveErrorMessage) {
+                setSaveErrorMessage('')
+              }
             }}
             placeholder="Write the Spanish translation"
           />
@@ -153,21 +175,26 @@ function Practice() {
           <button
             type="button"
             className="primary-button"
-            onClick={handleCheckAnswer}
-            disabled={!userAnswer.trim()}
+            onClick={() => void handleCheckAnswer()}
+            disabled={!userAnswer.trim() || isSavingAnswer}
           >
-            Check answer
+            {isSavingAnswer ? 'Saving answer...' : 'Check answer'}
           </button>
 
           <button
             type="button"
             className="secondary-button"
             onClick={handleNextWord}
+            disabled={isSavingAnswer}
           >
             Next word
           </button>
         </div>
       </div>
+
+      {saveErrorMessage ? (
+        <p className="auth-message auth-message--error">{saveErrorMessage}</p>
+      ) : null}
 
       {answerStatus === 'correct' ? (
         <p className="auth-message auth-message--success">

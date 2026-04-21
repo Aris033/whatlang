@@ -303,6 +303,41 @@
   font-size: 1rem;
 }
 
+.home-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.home-metric {
+  display: grid;
+  gap: 6px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(202, 223, 247, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-metric__label {
+  color: #b7d4f2;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.home-metric__value {
+  color: #ffffff;
+  font-size: clamp(1.3rem, 4vw, 2rem);
+  line-height: 1;
+}
+
+.home-hero__error {
+  margin-top: 14px;
+  color: #ffe0e0;
+}
+
 .home-grid {
   display: grid;
   gap: 16px;
@@ -353,6 +388,11 @@
   color: #587089;
 }
 
+.home-card__microcopy {
+  color: #7a8ea5;
+  font-size: 0.92rem;
+}
+
 .home-card__action {
   margin-top: 0;
   justify-self: flex-start;
@@ -382,6 +422,10 @@
   display: grid;
   gap: 10px;
   margin: 18px 0 22px;
+}
+
+.practice-word-block--enter {
+  animation: practice-word-enter 220ms ease;
 }
 
 .practice-word-row {
@@ -463,9 +507,165 @@
   gap: 16px;
 }
 
+.practice-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.practice-subnav {
+  display: flex;
+  align-items: center;
+}
+
+.practice-subnav__back {
+  border: none;
+  background: transparent;
+  color: #1f6aa5;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.practice-subnav__back:hover {
+  color: #123458;
+}
+
+.practice-modes-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.practice-mode-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #dfe6ef;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(248, 251, 255, 1) 100%);
+  box-shadow: 0 12px 28px rgba(18, 52, 88, 0.06);
+}
+
+.practice-mode-card.is-available {
+  border-color: #cfdceb;
+}
+
+.practice-mode-card__content {
+  display: grid;
+  gap: 8px;
+}
+
+.practice-mode-card h3 {
+  margin: 0;
+  color: #123458;
+  font-size: 1.2rem;
+}
+
+.practice-mode-card p {
+  margin: 0;
+  color: #60788f;
+}
+
+.practice-mode-card__action {
+  margin-top: 0;
+  justify-self: flex-start;
+}
+
+.practice-mode-card__coming-soon {
+  display: inline-flex;
+  align-items: center;
+  justify-self: flex-start;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background-color: #eef4fb;
+  color: #587089;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .practice-helper-text {
   color: #72879c;
   font-size: 0.92rem;
+}
+
+.quiz-difficulty-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 22px 0 18px;
+}
+
+.quiz-difficulty-option {
+  border: 1px solid #d0dbe8;
+  background-color: #f7fafe;
+  color: #123458;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quiz-difficulty-option:hover {
+  border-color: #1f6aa5;
+  transform: translateY(-1px);
+}
+
+.quiz-difficulty-option.is-active {
+  background: linear-gradient(135deg, #123458 0%, #1f6aa5 100%);
+  border-color: #123458;
+  color: #ffffff;
+}
+
+.quiz-progress-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quiz-progress-copy {
+  margin-top: 6px;
+  color: #70859c;
+}
+
+.quiz-summary-score {
+  margin-top: 12px;
+  color: #123458;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.quiz-summary-grid {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.quiz-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid #dfe6ef;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(250, 252, 255, 0.95) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.quiz-summary-card span {
+  color: #60788f;
+  font-weight: 600;
+}
+
+.quiz-summary-card strong {
+  color: #123458;
+  font-size: 1.6rem;
 }
 
 .practice-actions {
@@ -745,6 +945,18 @@
   transform: translateY(-1px);
 }
 
+@keyframes practice-word-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (min-width: 760px) {
   .app-shell {
     padding: 20px 24px 56px;
@@ -787,6 +999,14 @@
 
   .practice-helper-text {
     margin-top: -4px;
+  }
+
+  .practice-modes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quiz-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .mistake-card {
@@ -880,6 +1100,18 @@
   .home-card {
     padding: 18px;
     border-radius: 20px;
+  }
+
+  .home-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .home-metric {
+    padding: 12px 14px;
+  }
+
+  .quiz-progress-row {
+    align-items: center;
   }
 }
 

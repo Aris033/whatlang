@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { saveAnswer } from '../services/answersService'
+import { updateUserWordProgress } from '../services/progressService'
 import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
 
@@ -86,9 +88,29 @@ function Practice() {
     setIsSavingAnswer(true)
 
     try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError) {
+        throw new Error(userError.message)
+      }
+
+      if (!user) {
+        throw new Error('You must be signed in to save your answer.')
+      }
+
       await saveAnswer({
+        userId: user.id,
         wordId: currentWord.id,
         userAnswer: userAnswer.trim(),
+        isCorrect,
+      })
+
+      await updateUserWordProgress({
+        userId: user.id,
+        wordId: currentWord.id,
         isCorrect,
       })
     } catch (error) {

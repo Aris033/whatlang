@@ -1,13 +1,12 @@
 import { supabase } from '../lib/supabase'
 import type { Mistake } from '../types/mistake'
+import type { UserWordProgress } from '../types/progress'
 import type { Word } from '../types/word'
 
-type MistakeRow = {
-  id: number
-  word_id: number
-  user_answer: string
-  answered_at: string
-}
+type MistakeProgressRow = Pick<
+  UserWordProgress,
+  'word_id' | 'correct_count' | 'wrong_count' | 'last_answered_at'
+>
 
 export async function fetchMistakes(): Promise<Mistake[]> {
   const {
@@ -24,23 +23,34 @@ export async function fetchMistakes(): Promise<Mistake[]> {
   }
 
   const { data, error } = await supabase
-    .from('answers')
-    .select('id, word_id, user_answer, answered_at')
+    .from('user_word_progress')
+    .select(
+      'id, user_id, word_id, correct_count, wrong_count, last_is_correct, last_answered_at, updated_at'
+    )
     .eq('user_id', user.id)
-    .eq('is_correct', false)
-    .order('answered_at', { ascending: false })
+    .order('wrong_count', { ascending: false })
+    .order('last_answered_at', { ascending: false })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  const mistakeRows = data as MistakeRow[]
+  const progressRows = (data as UserWordProgress[])
+    .filter((entry) => entry.wrong_count > entry.correct_count)
+    .map(
+      (entry): MistakeProgressRow => ({
+        word_id: entry.word_id,
+        correct_count: entry.correct_count,
+        wrong_count: entry.wrong_count,
+        last_answered_at: entry.last_answered_at,
+      })
+    )
 
-  if (mistakeRows.length === 0) {
+  if (progressRows.length === 0) {
     return []
   }
 
-  const wordIds = [...new Set(mistakeRows.map((entry) => entry.word_id))]
+  const wordIds = [...new Set(progressRows.map((entry) => entry.word_id))]
 
   const { data: wordsData, error: wordsError } = await supabase
     .from('words')
@@ -55,12 +65,24 @@ export async function fetchMistakes(): Promise<Mistake[]> {
     (wordsData as Word[]).map((word) => [word.id, word] as const)
   )
 
-  return mistakeRows
+  return progressRows
     .filter((entry) => wordsById.has(entry.word_id))
     .map((entry) => ({
-      id: entry.id,
-      user_answer: entry.user_answer,
-      answered_at: entry.answered_at,
+      word_id: entry.word_id,
+      correct_count: entry.correct_count,
+      wrong_count: entry.wrong_count,
+      total_attempts: entry.correct_count + entry.wrong_count,
+      last_answered_at: entry.last_answered_at,
       word: wordsById.get(entry.word_id)!,
     }))
+    .sort((left, right) => {
+      if (right.wrong_count !== left.wrong_count) {
+        return right.wrong_count - left.wrong_count
+      }
+
+      return (
+        new Date(right.last_answered_at).getTime() -
+        new Date(left.last_answered_at).getTime()
+      )
+    })
 }

@@ -1,31 +1,20 @@
 import { supabase } from '../lib/supabase'
 
 type SaveAnswerInput = {
+  userId: string
   wordId: number
   userAnswer: string
   isCorrect: boolean
 }
 
 export async function saveAnswer({
+  userId,
   wordId,
   userAnswer,
   isCorrect,
 }: SaveAnswerInput): Promise<void> {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError) {
-    throw new Error(userError.message)
-  }
-
-  if (!user) {
-    throw new Error('You must be signed in to save an answer.')
-  }
-
   const { error } = await supabase.from('answers').insert({
-    user_id: user.id,
+    user_id: userId,
     word_id: wordId,
     user_answer: userAnswer,
     is_correct: isCorrect,

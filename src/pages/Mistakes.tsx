@@ -84,20 +84,25 @@ function Mistakes() {
   return (
     <section className="page-section">
       <span className="page-section__tag">Review</span>
-      <h2>Your recent mistakes</h2>
-      <p>These are your latest incorrect answers, sorted from newest to oldest.</p>
+      <h2>Your current mistakes</h2>
+      <p>
+        These words still need review because your wrong answers are higher than
+        your correct answers.
+      </p>
 
       <div className="mistakes-list">
         {mistakes.map((mistake) => (
-          <article key={mistake.id} className="mistake-card">
+          <article key={mistake.word_id} className="mistake-card">
             <div className="mistake-card__header">
               <h3>{mistake.word.english_word}</h3>
-              <span>{formatAnsweredAt(mistake.answered_at)}</span>
+              <span>{formatAnsweredAt(mistake.last_answered_at)}</span>
             </div>
 
             <div className="practice-meta">
-              <span>Correct: {mistake.word.spanish_translation}</span>
-              <span>Your answer: {mistake.user_answer}</span>
+              <span>Translation: {mistake.word.spanish_translation}</span>
+              <span>Wrong: {mistake.wrong_count}</span>
+              <span>Correct: {mistake.correct_count}</span>
+              <span>Total attempts: {mistake.total_attempts}</span>
               {mistake.word.topic ? <span>Topic: {mistake.word.topic}</span> : null}
               {mistake.word.difficulty ? (
                 <span>Difficulty: {mistake.word.difficulty}</span>

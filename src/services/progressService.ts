@@ -4,13 +4,17 @@ import type { UserWordProgress } from '../types/progress'
 type UpdateUserWordProgressInput = {
   userId: string
   wordId: number
-  isCorrect: boolean
+  correctDelta: number
+  wrongDelta: number
+  lastIsCorrect: boolean
 }
 
 export async function updateUserWordProgress({
   userId,
   wordId,
-  isCorrect,
+  correctDelta,
+  wrongDelta,
+  lastIsCorrect,
 }: UpdateUserWordProgressInput): Promise<void> {
   const { data, error } = await supabase
     .from('user_word_progress')
@@ -28,17 +32,8 @@ export async function updateUserWordProgress({
   const existingProgress = data as UserWordProgress | null
   const now = new Date().toISOString()
 
-  const correctCount = existingProgress
-    ? existingProgress.correct_count + (isCorrect ? 1 : 0)
-    : isCorrect
-      ? 1
-      : 0
-
-  const wrongCount = existingProgress
-    ? existingProgress.wrong_count + (isCorrect ? 0 : 1)
-    : isCorrect
-      ? 0
-      : 1
+  const correctCount = (existingProgress?.correct_count ?? 0) + correctDelta
+  const wrongCount = (existingProgress?.wrong_count ?? 0) + wrongDelta
 
   const { error: upsertError } = await supabase.from('user_word_progress').upsert(
     {
@@ -46,7 +41,7 @@ export async function updateUserWordProgress({
       word_id: wordId,
       correct_count: correctCount,
       wrong_count: wrongCount,
-      last_is_correct: isCorrect,
+      last_is_correct: lastIsCorrect,
       last_answered_at: now,
       updated_at: now,
     },

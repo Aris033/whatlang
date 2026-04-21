@@ -15,6 +15,27 @@ export function parseAcceptedTranslations(value: string) {
     .filter(Boolean)
 }
 
+export function getFirstAcceptedTranslation(value: string) {
+  const acceptedTranslations = parseAcceptedTranslations(value)
+
+  return acceptedTranslations[0] ?? ''
+}
+
+export function getHintPrefix(value: string) {
+  const firstTranslation = getFirstAcceptedTranslation(value)
+  const translationLength = firstTranslation.length
+
+  if (translationLength <= 4) {
+    return firstTranslation.slice(0, 1)
+  }
+
+  if (translationLength <= 7) {
+    return firstTranslation.slice(0, 2)
+  }
+
+  return firstTranslation.slice(0, 3)
+}
+
 export function isCorrectTranslation(
   userAnswer: string,
   acceptedTranslationsRaw: string

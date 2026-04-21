@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react'
-import { submitWordAnswer } from '../services/reviewService'
+import {
+  getAuthenticatedUserId,
+  recordProgressPenalty,
+  saveRevealedFailure,
+  submitWordAnswer,
+} from '../services/reviewService'
 import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
-import { formatTranslationsForDisplay } from '../utils/translations'
+import {
+  formatTranslationsForDisplay,
+  getFirstAcceptedTranslation,
+  getHintPrefix,
+} from '../utils/translations'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
 const AUTO_ADVANCE_DELAY_MS = 900
@@ -68,6 +77,9 @@ function Practice() {
   const [errorMessage, setErrorMessage] = useState('')
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
   const [isSavingAnswer, setIsSavingAnswer] = useState(false)
+  const [hintUsed, setHintUsed] = useState(false)
+  const [revealUsed, setRevealUsed] = useState(false)
+  const [revealedTranslation, setRevealedTranslation] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -108,7 +120,7 @@ function Practice() {
   }, [])
 
   useEffect(() => {
-    if (answerStatus !== 'correct') {
+    if (answerStatus !== 'correct' || revealUsed) {
       return
     }
 
@@ -119,10 +131,10 @@ function Practice() {
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [answerStatus, words, currentWord])
+  }, [answerStatus, revealUsed, words, currentWord])
 
   const handleCheckAnswer = async () => {
-    if (!currentWord) {
+    if (!currentWord || revealUsed) {
       return
     }
 
@@ -134,6 +146,9 @@ function Practice() {
         wordId: currentWord.id,
         userAnswer,
         correctTranslation: currentWord.spanish_translation,
+        hintUsed,
+        revealUsed: false,
+        penaltyPoints: hintUsed ? 1 : 0,
       })
 
       setAnswerStatus(result.isCorrect ? 'correct' : 'incorrect')
@@ -153,6 +168,74 @@ function Practice() {
     setUserAnswer('')
     setAnswerStatus('idle')
     setSaveErrorMessage('')
+    setHintUsed(false)
+    setRevealUsed(false)
+    setRevealedTranslation('')
+  }
+
+  const handleHintOrReveal = async () => {
+    if (!currentWord || isSavingAnswer) {
+      return
+    }
+
+    setSaveErrorMessage('')
+    setAnswerStatus('idle')
+
+    try {
+      const firstAcceptedTranslation = getFirstAcceptedTranslation(
+        currentWord.spanish_translation
+      )
+
+      if (!firstAcceptedTranslation) {
+        throw new Error('This word has no valid translation configured.')
+      }
+
+      const userId = await getAuthenticatedUserId()
+
+      if (!hintUsed) {
+        await recordProgressPenalty({
+          userId,
+          wordId: currentWord.id,
+          wrongDelta: 1,
+        })
+
+        setHintUsed(true)
+        setUserAnswer(getHintPrefix(currentWord.spanish_translation))
+        return
+      }
+
+      if (revealUsed) {
+        return
+      }
+
+      setIsSavingAnswer(true)
+
+      await recordProgressPenalty({
+        userId,
+        wordId: currentWord.id,
+        wrongDelta: 2,
+      })
+
+      const penaltyPoints = hintUsed ? 3 : 2
+
+      await saveRevealedFailure({
+        userId,
+        wordId: currentWord.id,
+        userAnswer,
+        penaltyPoints,
+        hintUsed,
+      })
+
+      setRevealUsed(true)
+      setRevealedTranslation(firstAcceptedTranslation)
+      setAnswerStatus('incorrect')
+    } catch (error) {
+      setSaveErrorMessage(
+        error instanceof Error ? error.message : 'Could not use help for this word.'
+      )
+    } finally {
+      setIsSavingAnswer(false)
+    }
   }
 
   if (isLoading) {
@@ -205,6 +288,7 @@ function Practice() {
           <input
             type="text"
             value={userAnswer}
+            disabled={revealUsed}
             onChange={(event) => {
               setUserAnswer(event.target.value)
               if (answerStatus !== 'idle') {
@@ -221,9 +305,18 @@ function Practice() {
         <div className="practice-actions">
           <button
             type="button"
+            className="secondary-button"
+            onClick={() => void handleHintOrReveal()}
+            disabled={isSavingAnswer || !currentWord || revealUsed}
+          >
+            {hintUsed ? 'Reveal' : 'Hint'}
+          </button>
+
+          <button
+            type="button"
             className="primary-button"
             onClick={() => void handleCheckAnswer()}
-            disabled={!userAnswer.trim() || isSavingAnswer}
+            disabled={!userAnswer.trim() || isSavingAnswer || revealUsed}
           >
             {isSavingAnswer ? 'Saving answer...' : 'Check answer'}
           </button>
@@ -243,13 +336,19 @@ function Practice() {
         <p className="auth-message auth-message--error">{saveErrorMessage}</p>
       ) : null}
 
+      {revealUsed && revealedTranslation ? (
+        <p className="auth-message auth-message--error">
+          Revealed answer: {revealedTranslation}
+        </p>
+      ) : null}
+
       {answerStatus === 'correct' ? (
         <p className="auth-message auth-message--success">
           Correct! Accepted answers: {formatTranslationsForDisplay(currentWord.spanish_translation)}.
         </p>
       ) : null}
 
-      {answerStatus === 'incorrect' ? (
+      {answerStatus === 'incorrect' && !revealUsed ? (
         <p className="auth-message auth-message--error">
           Incorrect. Correct answers: {formatTranslationsForDisplay(currentWord.spanish_translation)}.
         </p>

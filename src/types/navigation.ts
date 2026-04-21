@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'practice' | 'mistakes' | 'login'
+export type AppPage = 'home' | 'practice' | 'mistakes'
 
 export type NavigationItem = {
   id: AppPage

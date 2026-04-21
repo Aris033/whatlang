@@ -195,7 +195,17 @@ function Mistakes() {
                   </button>
                 </div>
 
-                <div className="mistake-card__review">
+                <form
+                  className="mistake-card__review"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    if (!state.answer.trim() || state.isSaving) {
+                      return
+                    }
+
+                    void handleCheckAnswer(mistake)
+                  }}
+                >
                   <input
                     type="text"
                     value={state.answer}
@@ -213,14 +223,13 @@ function Mistakes() {
                   />
 
                   <button
-                    type="button"
+                    type="submit"
                     className="mistake-card__check"
-                    onClick={() => void handleCheckAnswer(mistake)}
                     disabled={!state.answer.trim() || state.isSaving}
                   >
                     {state.isSaving ? 'Checking...' : 'Check'}
                   </button>
-                </div>
+                </form>
 
                 {state.saveErrorMessage ? (
                   <p className="auth-message auth-message--error">

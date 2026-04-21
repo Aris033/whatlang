@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   getAuthenticatedUserId,
   recordProgressPenalty,
@@ -80,6 +80,7 @@ function Practice() {
   const [hintUsed, setHintUsed] = useState(false)
   const [revealUsed, setRevealUsed] = useState(false)
   const [revealedTranslation, setRevealedTranslation] = useState('')
+  const answerInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -132,6 +133,14 @@ function Practice() {
       window.clearTimeout(timeoutId)
     }
   }, [answerStatus, revealUsed, words, currentWord])
+
+  useEffect(() => {
+    if (!currentWord || revealUsed) {
+      return
+    }
+
+    answerInputRef.current?.focus()
+  }, [currentWord, revealUsed])
 
   const handleCheckAnswer = async () => {
     if (!currentWord || revealUsed) {
@@ -201,6 +210,14 @@ function Practice() {
 
         setHintUsed(true)
         setUserAnswer(getHintPrefix(currentWord.spanish_translation))
+        window.setTimeout(() => {
+          answerInputRef.current?.focus()
+          const currentValueLength = answerInputRef.current?.value.length ?? 0
+          answerInputRef.current?.setSelectionRange(
+            currentValueLength,
+            currentValueLength
+          )
+        }, 0)
         return
       }
 
@@ -282,10 +299,21 @@ function Practice() {
         {currentWord.topic ? <p className="practice-topic">{currentWord.topic}</p> : null}
       </div>
 
-      <div className="practice-form">
+      <form
+        className="practice-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (!userAnswer.trim() || isSavingAnswer || revealUsed) {
+            return
+          }
+
+          void handleCheckAnswer()
+        }}
+      >
         <label className="auth-form__field">
           <span>Your answer</span>
           <input
+            ref={answerInputRef}
             type="text"
             value={userAnswer}
             disabled={revealUsed}
@@ -302,6 +330,10 @@ function Practice() {
           />
         </label>
 
+        <p className="practice-helper-text">
+          Press Enter to check faster, or use Hint if you get stuck.
+        </p>
+
         <div className="practice-actions">
           <button
             type="button"
@@ -313,9 +345,8 @@ function Practice() {
           </button>
 
           <button
-            type="button"
+            type="submit"
             className="primary-button"
-            onClick={() => void handleCheckAnswer()}
             disabled={!userAnswer.trim() || isSavingAnswer || revealUsed}
           >
             {isSavingAnswer ? 'Saving answer...' : 'Check answer'}
@@ -330,7 +361,7 @@ function Practice() {
             Next word
           </button>
         </div>
-      </div>
+      </form>
 
       {saveErrorMessage ? (
         <p className="auth-message auth-message--error">{saveErrorMessage}</p>

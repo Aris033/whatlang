@@ -10,7 +10,6 @@ import type { AppPage, NavigationItem } from './types/navigation'
 import './App.css'
 
 const navigationItems: NavigationItem[] = [
-  { id: 'home', label: 'Home' },
   { id: 'practice', label: 'Practice' },
   { id: 'mistakes', label: 'Mistakes' },
 ]
@@ -21,6 +20,7 @@ function App() {
   const [signOutError, setSignOutError] = useState('')
   const [currentPage, setCurrentPage] = useState<AppPage>('home')
   const [showWelcomeToast, setShowWelcomeToast] = useState(false)
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -78,6 +78,19 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsHeaderScrolled(window.scrollY > 12)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
   const handleSignOut = async () => {
     setSignOutError('')
 
@@ -113,16 +126,23 @@ function App() {
         </div>
       ) : null}
 
-      <header className="app-header">
-        <div className="app-header__brand">
+      <header className={isHeaderScrolled ? 'app-header is-scrolled' : 'app-header'}>
+        <button
+          type="button"
+          className="app-header__brand"
+          onClick={() => setCurrentPage('home')}
+          aria-label="Go to Home"
+        >
           <span className="app-header__logo" aria-hidden="true">
             WL
           </span>
-          <div>
-            <p className="app-header__name">WhatLang</p>
-            <p className="app-header__tagline">English practice with a lighter rhythm</p>
-          </div>
-        </div>
+          <span className="app-header__brand-copy">
+            <span className="app-header__name">WhatLang</span>
+            <span className="app-header__tagline">
+              English practice with a lighter rhythm
+            </span>
+          </span>
+        </button>
 
         <div className="app-header__nav-area">
           <NavBar

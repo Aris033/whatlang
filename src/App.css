@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 24px 16px 40px;
   box-sizing: border-box;
+  --app-header-height: 144px;
 }
 
 .app-toast {
@@ -33,23 +34,50 @@
 }
 
 .app-header {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  width: min(calc(100% - 32px), 1120px);
   display: flex;
   flex-direction: column;
   gap: 18px;
-  margin-bottom: 20px;
   padding: 18px 18px 14px;
   border: 1px solid rgba(203, 215, 228, 0.9);
   border-radius: 26px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(246, 250, 255, 0.92) 100%);
-  box-shadow: 0 18px 40px rgba(18, 52, 88, 0.08);
-  backdrop-filter: blur(12px);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 250, 255, 0.94) 100%);
+  box-shadow: 0 16px 34px rgba(18, 52, 88, 0.1);
+  backdrop-filter: blur(8px);
+  transition:
+    box-shadow 0.22s ease,
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    backdrop-filter 0.22s ease;
+}
+
+.app-header.is-scrolled {
+  border-color: rgba(190, 204, 220, 0.96);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 255, 0.98) 100%);
+  box-shadow: 0 20px 42px rgba(18, 52, 88, 0.14);
+  backdrop-filter: blur(10px);
 }
 
 .app-header__brand {
   display: flex;
   align-items: center;
   gap: 14px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-header__brand-copy {
+  display: grid;
 }
 
 .app-header__logo {
@@ -146,16 +174,19 @@
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 0;
+  padding: 4px;
   margin: 0;
+  border: 1px solid rgba(215, 225, 237, 0.92);
+  border-radius: 999px;
+  background-color: rgba(248, 251, 255, 0.86);
 }
 
 .nav-bar__item {
   border: 1px solid rgba(203, 215, 228, 0.9);
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.96);
   color: #35506e;
   border-radius: 999px;
-  padding: 10px 16px;
+  padding: 9px 15px;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -211,6 +242,7 @@
 .page-content {
   display: grid;
   gap: 20px;
+  padding-top: calc(var(--app-header-height) + 40px);
 }
 
 .page-section {
@@ -712,13 +744,16 @@
 @media (min-width: 760px) {
   .app-shell {
     padding: 32px 24px 56px;
+    --app-header-height: 96px;
   }
 
   .app-header {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    top: 24px;
     padding: 18px 20px;
+    width: min(calc(100% - 48px), 1120px);
   }
 
   .app-header__nav-area {

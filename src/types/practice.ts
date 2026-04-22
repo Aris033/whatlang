@@ -1,1 +1,7 @@
-export type PracticeMode = 'menu' | 'free-practice' | 'quiz' | 'category' | 'sprint'
+export type PracticeMode =
+  | 'menu'
+  | 'vocabulary'
+  | 'free-practice'
+  | 'quiz'
+  | 'category'
+  | 'sprint'

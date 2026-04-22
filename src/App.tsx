@@ -19,8 +19,17 @@ function App() {
   const [isLoadingSession, setIsLoadingSession] = useState(true)
   const [signOutError, setSignOutError] = useState('')
   const [currentPage, setCurrentPage] = useState<AppPage>('home')
+  const [practiceViewVersion, setPracticeViewVersion] = useState(0)
   const [showWelcomeToast, setShowWelcomeToast] = useState(false)
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
+
+  const handleNavigate = (page: AppPage) => {
+    setCurrentPage(page)
+
+    if (page === 'practice') {
+      setPracticeViewVersion((currentValue) => currentValue + 1)
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -50,6 +59,7 @@ function App() {
       setSession(nextSession)
       setSignOutError('')
       setCurrentPage('home')
+      setPracticeViewVersion(0)
       setIsLoadingSession(false)
 
       if (event === 'SIGNED_IN') {
@@ -148,7 +158,7 @@ function App() {
           <NavBar
             currentPage={currentPage}
             items={navigationItems}
-            onNavigate={setCurrentPage}
+            onNavigate={handleNavigate}
           />
 
           <div className="user-menu">
@@ -169,8 +179,8 @@ function App() {
           <p className="auth-message auth-message--error">{signOutError}</p>
         ) : null}
 
-        {currentPage === 'home' ? <Home onNavigate={setCurrentPage} /> : null}
-        {currentPage === 'practice' ? <Practice /> : null}
+        {currentPage === 'home' ? <Home onNavigate={handleNavigate} /> : null}
+        {currentPage === 'practice' ? <Practice key={practiceViewVersion} /> : null}
         {currentPage === 'mistakes' ? <Mistakes /> : null}
       </main>
     </div>

@@ -517,6 +517,10 @@
   align-items: center;
 }
 
+.practice-subnav--page {
+  margin-bottom: 14px;
+}
+
 .practice-subnav__back {
   border: none;
   background: transparent;
@@ -535,6 +539,71 @@
   display: grid;
   gap: 16px;
   margin-top: 24px;
+}
+
+.practice-areas-grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.practice-area-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid #dfe6ef;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(248, 251, 255, 1) 100%);
+  box-shadow: 0 14px 30px rgba(18, 52, 88, 0.06);
+}
+
+.practice-area-card.is-available {
+  border-color: #cfdceb;
+  background:
+    linear-gradient(180deg, rgba(244, 249, 255, 0.92) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.practice-area-card__content {
+  display: grid;
+  gap: 10px;
+}
+
+.practice-area-card__eyebrow {
+  color: #1f6aa5;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.practice-area-card h3 {
+  margin: 0;
+  color: #123458;
+  font-size: 1.45rem;
+}
+
+.practice-area-card p {
+  margin: 0;
+  color: #60788f;
+  max-width: 48ch;
+}
+
+.practice-area-card__action {
+  margin-top: 0;
+  justify-self: flex-start;
+}
+
+.practice-area-card__coming-soon {
+  display: inline-flex;
+  align-items: center;
+  justify-self: flex-start;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background-color: #eef4fb;
+  color: #587089;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .practice-mode-card {
@@ -1082,6 +1151,10 @@
   }
 
   .practice-modes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .practice-areas-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

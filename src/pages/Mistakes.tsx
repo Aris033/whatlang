@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { fetchMistakes } from '../services/mistakesService'
 import { submitWordAnswer } from '../services/reviewService'
 import type { Mistake } from '../types/mistake'
 import { formatTranslationsForDisplay } from '../utils/translations'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
+const MISTAKES_PER_PAGE = 5
 
 type MistakeReviewState = {
   answer: string
@@ -30,6 +31,7 @@ function Mistakes() {
   const [mistakes, setMistakes] = useState<Mistake[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const [reviewStateByWordId, setReviewStateByWordId] = useState<
     Record<number, MistakeReviewState>
   >({})
@@ -46,6 +48,14 @@ function Mistakes() {
       const fetchedMistakes = await fetchMistakes()
 
       setMistakes(fetchedMistakes)
+      setCurrentPage((currentPageValue) => {
+        const nextTotalPages = Math.max(
+          1,
+          Math.ceil(fetchedMistakes.length / MISTAKES_PER_PAGE)
+        )
+
+        return Math.min(currentPageValue, nextTotalPages)
+      })
       setReviewStateByWordId((current) => {
         const nextState: Record<number, MistakeReviewState> = {}
 
@@ -125,6 +135,13 @@ function Mistakes() {
     }))
   }
 
+  const totalPages = Math.max(1, Math.ceil(mistakes.length / MISTAKES_PER_PAGE))
+  const paginatedMistakes = useMemo(() => {
+    const startIndex = (currentPage - 1) * MISTAKES_PER_PAGE
+
+    return mistakes.slice(startIndex, startIndex + MISTAKES_PER_PAGE)
+  }, [currentPage, mistakes])
+
   if (isLoading) {
     return (
       <section className="page-section">
@@ -168,7 +185,7 @@ function Mistakes() {
       </p>
 
       <div className="mistakes-list">
-        {mistakes.map((mistake) => {
+        {paginatedMistakes.map((mistake) => {
           const state =
             reviewStateByWordId[mistake.word_id] ?? createInitialReviewState()
 
@@ -252,6 +269,37 @@ function Mistakes() {
             </article>
           )
         })}
+      </div>
+
+      <div className="mistakes-pagination mistakes-pagination--floating">
+        <span className="mistakes-pagination__summary">
+          Showing {(currentPage - 1) * MISTAKES_PER_PAGE + 1}-
+          {Math.min(currentPage * MISTAKES_PER_PAGE, mistakes.length)} of {mistakes.length}
+        </span>
+
+        <div className="mistakes-pagination__actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+
+          <span className="mistakes-pagination__page">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </section>
   )

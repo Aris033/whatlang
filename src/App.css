@@ -725,6 +725,41 @@
   margin-top: 24px;
 }
 
+.mistakes-pagination {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.mistakes-pagination__summary {
+  color: #70859c;
+  font-size: 0.95rem;
+}
+
+.mistakes-pagination__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mistakes-pagination__page {
+  color: #123458;
+  font-weight: 700;
+}
+
+.mistakes-pagination--floating {
+  position: sticky;
+  bottom: 14px;
+  z-index: 8;
+  padding: 12px 14px;
+  border: 1px solid rgba(203, 215, 228, 0.92);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 28px rgba(18, 52, 88, 0.12);
+  backdrop-filter: blur(10px);
+}
+
 .mistake-card {
   border: 1px solid #dfe6ef;
   border-radius: 20px;
@@ -1065,6 +1100,11 @@
 
   .mistake-card {
     padding: 22px;
+  }
+
+  .mistakes-pagination {
+    grid-template-columns: 1fr auto;
+    align-items: center;
   }
 
   .mistake-card__review {

@@ -78,8 +78,29 @@ const practiceModes: PracticeModeCard[] = [
   },
 ]
 
-function Practice() {
+type PracticeProps = {
+  isGuest?: boolean
+}
+
+function Practice({ isGuest = false }: PracticeProps) {
   const [currentMode, setCurrentMode] = useState<PracticeMode>('menu')
+
+  if (isGuest) {
+    return (
+      <div className="practice-shell">
+        <section className="page-section">
+          <span className="page-section__tag">Practice</span>
+          <h2>Free Practice preview</h2>
+          <p>
+            You are exploring WhatLang as a guest. For now, only Free Practice
+            is available and nothing will be saved to your account.
+          </p>
+        </section>
+
+        <FreePractice isGuest />
+      </div>
+    )
+  }
 
   if (currentMode === 'free-practice') {
     return (

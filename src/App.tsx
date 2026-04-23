@@ -9,6 +9,8 @@ import { supabase } from './lib/supabase'
 import type { AppPage, NavigationItem } from './types/navigation'
 import './App.css'
 
+const GUEST_MODE_STORAGE_KEY = 'whatlang_guest_mode'
+
 const navigationItems: NavigationItem[] = [
   { id: 'practice', label: 'Practice' },
   { id: 'mistakes', label: 'Mistakes' },
@@ -20,6 +22,7 @@ function App() {
   const [signOutError, setSignOutError] = useState('')
   const [currentPage, setCurrentPage] = useState<AppPage>('home')
   const [practiceViewVersion, setPracticeViewVersion] = useState(0)
+  const [isGuestMode, setIsGuestMode] = useState(false)
   const [showWelcomeToast, setShowWelcomeToast] = useState(false)
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false)
 
@@ -46,6 +49,11 @@ function App() {
         setSignOutError(error.message)
       } else {
         setSession(data.session)
+        const storedGuestMode =
+          window.localStorage.getItem(GUEST_MODE_STORAGE_KEY) === 'true'
+
+        setIsGuestMode(!data.session && storedGuestMode)
+        setCurrentPage(!data.session && storedGuestMode ? 'practice' : 'home')
       }
 
       setIsLoadingSession(false)
@@ -63,6 +71,8 @@ function App() {
       setIsLoadingSession(false)
 
       if (event === 'SIGNED_IN') {
+        setIsGuestMode(false)
+        window.localStorage.removeItem(GUEST_MODE_STORAGE_KEY)
         setShowWelcomeToast(true)
 
         if (toastTimeoutId) {
@@ -76,6 +86,8 @@ function App() {
 
       if (event === 'SIGNED_OUT') {
         setShowWelcomeToast(false)
+        setIsGuestMode(false)
+        window.localStorage.removeItem(GUEST_MODE_STORAGE_KEY)
       }
     })
 
@@ -111,6 +123,20 @@ function App() {
     }
   }
 
+  const handleContinueAsGuest = () => {
+    setIsGuestMode(true)
+    setCurrentPage('practice')
+    setPracticeViewVersion((currentValue) => currentValue + 1)
+    window.localStorage.setItem(GUEST_MODE_STORAGE_KEY, 'true')
+  }
+
+  const handleExitGuestMode = () => {
+    setIsGuestMode(false)
+    setCurrentPage('home')
+    setPracticeViewVersion(0)
+    window.localStorage.removeItem(GUEST_MODE_STORAGE_KEY)
+  }
+
   if (isLoadingSession) {
     return (
       <div className="app-shell">
@@ -123,13 +149,18 @@ function App() {
     )
   }
 
-  if (!session) {
-    return <Login />
+  if (!session && !isGuestMode) {
+    return <Login onContinueAsGuest={handleContinueAsGuest} />
   }
+
+  const isAuthenticated = Boolean(session)
+  const availableNavigationItems = isAuthenticated
+    ? navigationItems
+    : navigationItems.filter((item) => item.id === 'practice')
 
   return (
     <div className="app-shell">
-      {showWelcomeToast ? (
+      {showWelcomeToast && isAuthenticated ? (
         <div className="app-toast" role="status" aria-live="polite">
           <strong>Welcome back</strong>
           <span>You&apos;re signed in and ready to practise.</span>
@@ -140,8 +171,8 @@ function App() {
         <button
           type="button"
           className="app-header__brand"
-          onClick={() => setCurrentPage('home')}
-          aria-label="Go to Home"
+          onClick={() => handleNavigate(isAuthenticated ? 'home' : 'practice')}
+          aria-label={isAuthenticated ? 'Go to Home' : 'Go to Practice'}
         >
           <span className="app-header__logo" aria-hidden="true">
             WL
@@ -157,19 +188,36 @@ function App() {
         <div className="app-header__nav-area">
           <NavBar
             currentPage={currentPage}
-            items={navigationItems}
+            items={availableNavigationItems}
             onNavigate={handleNavigate}
           />
 
           <div className="user-menu">
-            <span className="user-menu__email">{session.user.email ?? 'unknown email'}</span>
-            <button
-              type="button"
-              className="user-menu__signout"
-              onClick={handleSignOut}
-            >
-              Sign out
-            </button>
+            {isAuthenticated ? (
+              <>
+                <span className="user-menu__email">
+                  {session?.user.email ?? 'unknown email'}
+                </span>
+                <button
+                  type="button"
+                  className="user-menu__signout"
+                  onClick={handleSignOut}
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="user-menu__email">Guest mode</span>
+                <button
+                  type="button"
+                  className="user-menu__signout"
+                  onClick={handleExitGuestMode}
+                >
+                  Sign in
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -179,9 +227,13 @@ function App() {
           <p className="auth-message auth-message--error">{signOutError}</p>
         ) : null}
 
-        {currentPage === 'home' ? <Home onNavigate={handleNavigate} /> : null}
-        {currentPage === 'practice' ? <Practice key={practiceViewVersion} /> : null}
-        {currentPage === 'mistakes' ? <Mistakes /> : null}
+        {isAuthenticated && currentPage === 'home' ? (
+          <Home onNavigate={handleNavigate} />
+        ) : null}
+        {currentPage === 'practice' ? (
+          <Practice key={practiceViewVersion} isGuest={!isAuthenticated} />
+        ) : null}
+        {isAuthenticated && currentPage === 'mistakes' ? <Mistakes /> : null}
       </main>
     </div>
   )

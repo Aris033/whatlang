@@ -5,17 +5,23 @@ import {
   saveRevealedFailure,
   submitWordAnswer,
 } from '../services/reviewService'
+import { guestWords } from '../lib/guestWords'
 import { fetchWords } from '../services/wordsService'
 import type { Word } from '../types/word'
 import {
   formatTranslationsForDisplay,
   getFirstAcceptedTranslation,
   getHintPrefix,
+  isCorrectTranslation,
 } from '../utils/translations'
 import DifficultyIndicator from './DifficultyIndicator'
 
 type AnswerStatus = 'idle' | 'correct' | 'incorrect'
 const AUTO_ADVANCE_DELAY_MS = 900
+
+type FreePracticeProps = {
+  isGuest?: boolean
+}
 
 function getRandomWord(words: Word[], currentWordId?: number) {
   if (words.length === 0) {
@@ -32,7 +38,7 @@ function getRandomWord(words: Word[], currentWordId?: number) {
   return availableWords[randomIndex]
 }
 
-function FreePractice() {
+function FreePractice({ isGuest = false }: FreePracticeProps) {
   const [words, setWords] = useState<Word[]>([])
   const [currentWord, setCurrentWord] = useState<Word | null>(null)
   const [userAnswer, setUserAnswer] = useState('')
@@ -54,6 +60,16 @@ function FreePractice() {
       setErrorMessage('')
 
       try {
+        if (isGuest) {
+          if (!isMounted) {
+            return
+          }
+
+          setWords(guestWords)
+          setCurrentWord(getRandomWord(guestWords))
+          return
+        }
+
         const fetchedWords = await fetchWords()
 
         if (!isMounted) {
@@ -82,7 +98,7 @@ function FreePractice() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [isGuest])
 
   useEffect(() => {
     if (answerStatus !== 'correct' || revealUsed) {
@@ -115,6 +131,16 @@ function FreePractice() {
     setIsSavingAnswer(true)
 
     try {
+      if (isGuest) {
+        const result = isCorrectTranslation(
+          userAnswer,
+          currentWord.spanish_translation
+        )
+
+        setAnswerStatus(result.isCorrect ? 'correct' : 'incorrect')
+        return
+      }
+
       const result = await submitWordAnswer({
         wordId: currentWord.id,
         userAnswer,
@@ -161,6 +187,31 @@ function FreePractice() {
 
       if (!firstAcceptedTranslation) {
         throw new Error('This word has no valid translation configured.')
+      }
+
+      if (isGuest) {
+        if (!hintUsed) {
+          setHintUsed(true)
+          setUserAnswer(getHintPrefix(currentWord.spanish_translation))
+          window.setTimeout(() => {
+            answerInputRef.current?.focus()
+            const currentValueLength = answerInputRef.current?.value.length ?? 0
+            answerInputRef.current?.setSelectionRange(
+              currentValueLength,
+              currentValueLength
+            )
+          }, 0)
+          return
+        }
+
+        if (revealUsed) {
+          return
+        }
+
+        setRevealUsed(true)
+        setRevealedTranslation(firstAcceptedTranslation)
+        setAnswerStatus('incorrect')
+        return
       }
 
       const userId = await getAuthenticatedUserId()
@@ -224,7 +275,11 @@ function FreePractice() {
       <section className="page-section">
         <span className="page-section__tag">Free Practice</span>
         <h2>Loading words...</h2>
-        <p>Fetching vocabulary from Supabase for your first practice round.</p>
+        <p>
+          {isGuest
+            ? 'Preparing a small guest preview for your first round.'
+            : 'Fetching vocabulary from Supabase for your first practice round.'}
+        </p>
       </section>
     )
   }
@@ -244,7 +299,11 @@ function FreePractice() {
       <section className="page-section">
         <span className="page-section__tag">Free Practice</span>
         <h2>No words available yet.</h2>
-        <p>Add some rows to the `words` table and this practice flow will be ready.</p>
+        <p>
+          {isGuest
+            ? 'Guest preview words could not be prepared.'
+            : 'Add some rows to the `words` table and this practice flow will be ready.'}
+        </p>
       </section>
     )
   }
@@ -253,6 +312,13 @@ function FreePractice() {
     <section className="page-section">
       <span className="page-section__tag">Free Practice</span>
       <h2>Translate</h2>
+
+      {isGuest ? (
+        <p className="practice-guest-note">
+          Guest preview: answers are checked locally and this session will not
+          save your progress.
+        </p>
+      ) : null}
 
       <div key={currentWord.id} className="practice-word-block practice-word-block--enter">
         <div className="practice-word-row">
@@ -313,7 +379,11 @@ function FreePractice() {
             className="primary-button"
             disabled={!userAnswer.trim() || isSavingAnswer || revealUsed}
           >
-            {isSavingAnswer ? 'Saving answer...' : 'Check answer'}
+            {isSavingAnswer
+              ? isGuest
+                ? 'Checking...'
+                : 'Saving answer...'
+              : 'Check answer'}
           </button>
 
           <button

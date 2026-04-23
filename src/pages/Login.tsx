@@ -3,13 +3,18 @@ import { supabase } from '../lib/supabase'
 
 type AuthMode = 'sign-in' | 'sign-up'
 
-function Login() {
+type LoginProps = {
+  onContinueAsGuest: () => void
+}
+
+function Login({ onContinueAsGuest }: LoginProps) {
   const [mode, setMode] = useState<AuthMode>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false)
 
   const isSignIn = mode === 'sign-in'
 
@@ -140,7 +145,95 @@ function Login() {
             </button>
           </form>
         </section>
+
+        <div className="auth-guest-entry">
+          <button
+            type="button"
+            className="auth-guest-entry__button"
+            onClick={() => setIsGuestModalOpen(true)}
+          >
+            Try without signing in
+          </button>
+        </div>
       </main>
+
+      {isGuestModalOpen ? (
+        <div
+          className="auth-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="guest-preview-title"
+        >
+          <div
+            className="auth-modal__backdrop"
+            onClick={() => setIsGuestModalOpen(false)}
+          />
+
+          <div className="auth-modal__panel">
+            <div className="auth-modal__preview" aria-hidden="true">
+              <div className="auth-modal__preview-header">
+                <span className="auth-modal__preview-pill">Vocabulary</span>
+                <span className="auth-modal__preview-pill auth-modal__preview-pill--muted">
+                  Full account
+                </span>
+              </div>
+
+              <div className="auth-modal__preview-card">
+                <strong>What you unlock with an account</strong>
+                <span>Free Practice, Quiz, Category, Sprint and Mistakes review.</span>
+              </div>
+
+              <div className="auth-modal__preview-grid">
+                <div className="auth-modal__preview-box">
+                  <span>Saved answers</span>
+                </div>
+                <div className="auth-modal__preview-box">
+                  <span>Review history</span>
+                </div>
+                <div className="auth-modal__preview-box">
+                  <span>Progress tracking</span>
+                </div>
+                <div className="auth-modal__preview-box">
+                  <span>More modes</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="auth-modal__content">
+              <span className="auth-card__tag">Guest preview</span>
+              <h2 id="guest-preview-title">Try WhatLang without signing in</h2>
+              <p>
+                You can test the app right now, but guest mode is only a small
+                preview of the full experience.
+              </p>
+
+              <div className="auth-guest-list" aria-label="Guest mode limitations">
+                <p>You will only be able to use Free Practice.</p>
+                <p>You will not save answers, progress or review history.</p>
+                <p>Quiz, Category, Sprint and Mistakes stay locked until you sign in.</p>
+              </div>
+
+              <div className="auth-modal__actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setIsGuestModalOpen(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={onContinueAsGuest}
+                >
+                  Continue as guest
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

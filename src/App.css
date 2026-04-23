@@ -659,6 +659,11 @@
   font-size: 0.92rem;
 }
 
+.practice-guest-note {
+  margin-top: 6px;
+  color: #60788f;
+}
+
 .quiz-difficulty-selector {
   display: flex;
   flex-wrap: wrap;
@@ -954,6 +959,11 @@
   margin-top: 48px;
 }
 
+.auth-card--guest {
+  background:
+    linear-gradient(180deg, rgba(249, 251, 254, 0.92) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
 .auth-card__tag {
   display: inline-flex;
   margin-bottom: 12px;
@@ -1002,6 +1012,149 @@
 .auth-form {
   display: grid;
   gap: 16px;
+}
+
+.auth-guest-entry {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-guest-entry__button {
+  border: none;
+  background: transparent;
+  color: #587089;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.auth-guest-entry__button:hover {
+  color: #123458;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 30, 49, 0.48);
+  backdrop-filter: blur(6px);
+}
+
+.auth-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(960px, 100%);
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid rgba(203, 215, 228, 0.92);
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(18, 52, 88, 0.2);
+}
+
+.auth-modal__preview {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(123, 192, 255, 0.16) 0%, rgba(123, 192, 255, 0) 42%),
+    linear-gradient(135deg, #123458 0%, #1a4b7d 52%, #245f94 100%);
+}
+
+.auth-modal__preview-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.auth-modal__preview-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #f8fbff;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.auth-modal__preview-pill--muted {
+  background: rgba(255, 255, 255, 0.1);
+  color: #dbeeff;
+}
+
+.auth-modal__preview-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eff7ff;
+}
+
+.auth-modal__preview-card strong {
+  font-size: 1.05rem;
+}
+
+.auth-modal__preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.auth-modal__preview-box {
+  display: flex;
+  align-items: end;
+  min-height: 84px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #eff7ff;
+  font-weight: 600;
+}
+
+.auth-modal__content {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.auth-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.auth-guest-list {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 0;
+}
+
+.auth-guest-list p {
+  padding: 12px 14px;
+  border: 1px solid #dfe6ef;
+  border-radius: 14px;
+  background-color: #f8fbff;
+  color: #587089;
+}
+
+.auth-guest-button {
+  margin-top: 22px;
 }
 
 .auth-form__field {
@@ -1142,6 +1295,10 @@
     padding: 32px;
   }
 
+  .auth-modal__panel {
+    grid-template-columns: 1.05fr 0.95fr;
+  }
+
   .practice-actions {
     flex-direction: row;
   }
@@ -1279,6 +1436,19 @@
 
   .quiz-progress-row {
     align-items: center;
+  }
+
+  .auth-modal {
+    padding: 14px;
+  }
+
+  .auth-modal__preview,
+  .auth-modal__content {
+    padding: 20px;
+  }
+
+  .auth-modal__preview-grid {
+    grid-template-columns: 1fr;
   }
 }
 

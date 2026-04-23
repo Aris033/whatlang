@@ -1,0 +1,68 @@
+import type { Word } from '../types/word'
+
+export const guestWords: Word[] = [
+  {
+    id: 10001,
+    english_word: 'bed',
+    spanish_translation: 'cama',
+    difficulty: 1,
+    topic: 'home',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 10002,
+    english_word: 'listen',
+    spanish_translation: 'escuchar|oir',
+    difficulty: 2,
+    topic: 'verbs',
+    created_at: '2026-01-02T00:00:00.000Z',
+  },
+  {
+    id: 10003,
+    english_word: 'beautiful',
+    spanish_translation: 'hermoso|bello|lindo',
+    difficulty: 2,
+    topic: 'adjectives',
+    created_at: '2026-01-03T00:00:00.000Z',
+  },
+  {
+    id: 10004,
+    english_word: 'window',
+    spanish_translation: 'ventana',
+    difficulty: 1,
+    topic: 'home',
+    created_at: '2026-01-04T00:00:00.000Z',
+  },
+  {
+    id: 10005,
+    english_word: 'travel',
+    spanish_translation: 'viajar',
+    difficulty: 2,
+    topic: 'travel',
+    created_at: '2026-01-05T00:00:00.000Z',
+  },
+  {
+    id: 10006,
+    english_word: 'chair',
+    spanish_translation: 'silla',
+    difficulty: 1,
+    topic: 'home',
+    created_at: '2026-01-06T00:00:00.000Z',
+  },
+  {
+    id: 10007,
+    english_word: 'buy',
+    spanish_translation: 'comprar',
+    difficulty: 1,
+    topic: 'shopping',
+    created_at: '2026-01-07T00:00:00.000Z',
+  },
+  {
+    id: 10008,
+    english_word: 'quickly',
+    spanish_translation: 'rapidamente|rápidamente',
+    difficulty: 3,
+    topic: 'adverbs',
+    created_at: '2026-01-08T00:00:00.000Z',
+  },
+]
